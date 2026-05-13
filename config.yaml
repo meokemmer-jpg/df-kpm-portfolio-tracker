@@ -30,6 +30,27 @@ description: |
   Real-Market-Data-Integration nur via ENV-Var + Phronesis-Ticket.
   Foundation-DF fuer DF-KPM-Rebalance-Engine + DF-KPM-Drawdown-Monitor.
 
+# === Default-Action (per ausreden-schutz.md Schicht 2, Welle-47 Migration Batch-1) ===
+# K_0-DIRECT: ALLE Gates Pflicht (Familien-Vermoegen-Direktberuehrung)
+default_action:
+  description: "Daily 06:00 NAV-Snapshot Sandbox-Mock-3-Asset-Portfolio (Equities/Bonds/Cash) + Position-Drift-Detection vs Variante-D-Target-Allocation + Drawdown-Cap-Compliance (15/20/25%)"
+  rho_per_run_eur: 200
+  rho_validation_source: unvalidated
+  block_gates:
+    - gate_id: K13_PAV
+      block_reason: "K_0-Direct: Pre-Action-Verification Pflicht (env_tag sandbox/prod + mount_point sqlite-db + pre-snapshot-Sanity + Variante-D-Compliance-Check)"
+      false_block_cost_eur: 100
+      legitimate_block_condition: "env_tag mismatch ODER PHRONESIS_TICKET fehlt bei DF_KPM_PORTFOLIO_REAL_ENABLED=true (Real-Market-Data-Mode)"
+    - gate_id: K11
+      block_reason: "K_0-Direct: Cascade-Isolation hard - kein Cross-Asset-Mutation, NAV-Historie append-only, kein Trade-Execution"
+      false_block_cost_eur: 150
+      legitimate_block_condition: "Tracker-Failure detected (downstream DF-KPM-Rebalance betroffen) - PHRONESIS-Eskalation"
+    - gate_id: K14
+      block_reason: "K_0-Sperr-Liste Item-1: Budget-Allokation > 10k EUR Pflicht-Phronesis Martin"
+      false_block_cost_eur: 80
+      legitimate_block_condition: "Variante-D-Drift detected (Drawdown > 15% Soft-Brake) ODER Asset-Allocation-Change vorgeschlagen"
+  graceful_degradation_path: "Sandbox-Mock-Mode (Mock-3-Asset-Portfolio, 70% Capability) bei market_data_feed unreachable >30s ODER PHRONESIS_TICKET missing - KEINE Trade-Execution"
+
 # === Tier-2 Pflicht-Check (when-to-archon.md) ===
 
 tier_2_check:
