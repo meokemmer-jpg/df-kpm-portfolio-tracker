@@ -1,8 +1,3 @@
-# DF-KPM-Portfolio-Tracker Configuration [CRUX-MK]
-# Welle-42 Foundation-DF: KPM Variante-D-Hybrid
-# Per ~/.claude/rules/kpm-sizing.md
-# Build-Trigger: Architekt-Welle-42 W41-D Subagent
-
 df_id: df-kpm-portfolio-tracker
 df_name: KPM-Portfolio-Tracker
 welle_introduced: welle-42
@@ -10,199 +5,181 @@ type: foundation-df
 version: 0.1.0-PHASE-1
 status: PHASE-1-SCAFFOLD
 crux-mk: true
-
-# K_0-MAX-Berührung (Familien-Vermoegen Direct)
 k0_touch: true
 k0_caveats:
-  - "Familien-Vermoegen Direct-Berührung (Read-only Tracking)"
-  - "Variante-D Drawdown-Caps Pflicht (15/20/25%)"
-  - "Cross-LLM-3OF3 + Martin-Phronesis pro Real-Mode-Aktivieren"
-  - "Sandbox-Mode-Default mit Mock-3-Asset-Portfolio"
-  - "KEINE Trade-Execution, nur State-Monitoring"
-
+- Familien-Vermoegen Direct-Berührung (Read-only Tracking)
+- Variante-D Drawdown-Caps Pflicht (15/20/25%)
+- Cross-LLM-3OF3 + Martin-Phronesis pro Real-Mode-Aktivieren
+- Sandbox-Mode-Default mit Mock-3-Asset-Portfolio
+- KEINE Trade-Execution, nur State-Monitoring
 phronesis_required: true
 sandbox_default: true
+description: 'Real-Portfolio-State-Monitoring fuer Kemmer-Familien-Vermoegen.
 
-description: |
-  Real-Portfolio-State-Monitoring fuer Kemmer-Familien-Vermoegen.
   Tagesschluss-NAV pro Asset-Klasse + Position-Drift vs Target-Allocation.
+
   Sandbox-Default mit Mock-3-Asset-Portfolio (Equities/Bonds/Cash).
+
   Real-Market-Data-Integration nur via ENV-Var + Phronesis-Ticket.
+
   Foundation-DF fuer DF-KPM-Rebalance-Engine + DF-KPM-Drawdown-Monitor.
 
-# === Default-Action (per ausreden-schutz.md Schicht 2, Welle-47 Migration Batch-1) ===
-# K_0-DIRECT: ALLE Gates Pflicht (Familien-Vermoegen-Direktberuehrung)
+  '
 default_action:
-  description: "Daily 06:00 NAV-Snapshot Sandbox-Mock-3-Asset-Portfolio (Equities/Bonds/Cash) + Position-Drift-Detection vs Variante-D-Target-Allocation + Drawdown-Cap-Compliance (15/20/25%)"
+  description: Daily 06:00 NAV-Snapshot Sandbox-Mock-3-Asset-Portfolio (Equities/Bonds/Cash)
+    + Position-Drift-Detection vs Variante-D-Target-Allocation + Drawdown-Cap-Compliance
+    (15/20/25%)
   rho_per_run_eur: 200
   rho_validation_source: unvalidated
   block_gates:
-    - gate_id: K13_PAV
-      block_reason: "K_0-Direct: Pre-Action-Verification Pflicht (env_tag sandbox/prod + mount_point sqlite-db + pre-snapshot-Sanity + Variante-D-Compliance-Check)"
-      false_block_cost_eur: 100
-      legitimate_block_condition: "env_tag mismatch ODER PHRONESIS_TICKET fehlt bei DF_KPM_PORTFOLIO_REAL_ENABLED=true (Real-Market-Data-Mode)"
-    - gate_id: K11
-      block_reason: "K_0-Direct: Cascade-Isolation hard - kein Cross-Asset-Mutation, NAV-Historie append-only, kein Trade-Execution"
-      false_block_cost_eur: 150
-      legitimate_block_condition: "Tracker-Failure detected (downstream DF-KPM-Rebalance betroffen) - PHRONESIS-Eskalation"
-    - gate_id: K14
-      block_reason: "K_0-Sperr-Liste Item-1: Budget-Allokation > 10k EUR Pflicht-Phronesis Martin"
-      false_block_cost_eur: 80
-      legitimate_block_condition: "Variante-D-Drift detected (Drawdown > 15% Soft-Brake) ODER Asset-Allocation-Change vorgeschlagen"
-  graceful_degradation_path: "Sandbox-Mock-Mode (Mock-3-Asset-Portfolio, 70% Capability) bei market_data_feed unreachable >30s ODER PHRONESIS_TICKET missing - KEINE Trade-Execution"
-
-# === Tier-2 Pflicht-Check (when-to-archon.md) ===
-
+  - gate_id: K13_PAV
+    block_reason: 'K_0-Direct: Pre-Action-Verification Pflicht (env_tag sandbox/prod
+      + mount_point sqlite-db + pre-snapshot-Sanity + Variante-D-Compliance-Check)'
+    false_block_cost_eur: 100
+    legitimate_block_condition: env_tag mismatch ODER PHRONESIS_TICKET fehlt bei DF_KPM_PORTFOLIO_REAL_ENABLED=true
+      (Real-Market-Data-Mode)
+  - gate_id: K11
+    block_reason: 'K_0-Direct: Cascade-Isolation hard - kein Cross-Asset-Mutation,
+      NAV-Historie append-only, kein Trade-Execution'
+    false_block_cost_eur: 150
+    legitimate_block_condition: Tracker-Failure detected (downstream DF-KPM-Rebalance
+      betroffen) - PHRONESIS-Eskalation
+  - gate_id: K14
+    block_reason: 'K_0-Sperr-Liste Item-1: Budget-Allokation > 10k EUR Pflicht-Phronesis
+      Martin'
+    false_block_cost_eur: 80
+    legitimate_block_condition: Variante-D-Drift detected (Drawdown > 15% Soft-Brake)
+      ODER Asset-Allocation-Change vorgeschlagen
+  graceful_degradation_path: Sandbox-Mock-Mode (Mock-3-Asset-Portfolio, 70% Capability)
+    bei market_data_feed unreachable >30s ODER PHRONESIS_TICKET missing - KEINE Trade-Execution
 tier_2_check:
-  lambda_per_month_estimate: 30  # Daily-Run
-  narrow_scope: "Portfolio-NAV-Tracking + Position-Drift-Detection + Sandbox-Mock-Default"
-  determinism: 0.95  # Mock-Adapter deterministisch
+  lambda_per_month_estimate: 30
+  narrow_scope: Portfolio-NAV-Tracking + Position-Drift-Detection + Sandbox-Mock-Default
+  determinism: 0.95
   rollback_seconds: 30
-  test_coverage_target: 0.90
-  k0_protected: true   # Read-only, keine Trade-Execution
-  q0_measurable: true  # NAV-Konsistenz + Provenance pro Snapshot
+  test_coverage_target: 0.9
+  k0_protected: true
+  q0_measurable: true
   escalation_after_n_fails: 3
-  rho_budget_eur_day: 0  # Sandbox-only, kein Real-API-Cost
+  rho_budget_eur_day: 0
   audit_trail: branch-hub/audit/df-kpm-portfolio-tracker.jsonl
-
-# === K11-K16 Akzeptanz-Kriterien ===
-
 k11_cascade_containment:
   cascade_isolation: hard
-  failure_blast_radius: 1  # Tracker-Failure stoppt Rebalance + Drawdown-Monitor
-  dependency_dlq_strategy: "per Snapshot eigene DLQ + jsonl-Backup; Mock-Fallback bei Real-API-Failure"
-
+  failure_blast_radius: 1
+  dependency_dlq_strategy: per Snapshot eigene DLQ + jsonl-Backup; Mock-Fallback bei
+    Real-API-Failure
 k12_distillation_resistenz:
   output_feeds_into_training: false
-  provenance_required_in_output: true  # Jeder NAV-Snapshot hat source+timestamp+asset_classes
+  provenance_required_in_output: true
   non_llm_validation_layer: rule-based-allocation-validator
-  # W50-A Batch-2 K12 upgrade: FullProvenanceEnvelope (HMAC + chain_predecessor) per Snapshot
   envelope_schema: full_provenance_envelope_v1
   hmac_secret_env_var: DF_KPM_PORTFOLIO_HMAC_SECRET
   envelope_ttl_seconds: 86400
   chain_linkage: true
-
-# W50-A Batch-2 K13 upgrade (K_0-DIRECT pflicht):
 k13_independent_ground_truth:
-  external_anchor_type: rfc3161
-  external_anchor_provider: freetsa
-  external_anchor_validation_frequency: per_snapshot
-  anchor_log: audit/anchors/rfc3161-anchors.jsonl
-  pre_action_domain_check: true
-  pre_action_backup_check: true
-
-# W50-A Batch-2 K16 upgrade:
-k16_concurrent_spawn_mutex:
-  concurrent_spawn_protection: both
-  lock_dir: /tmp/df-kpm-portfolio-tracker.lock
-  lock_implementation: atomic_lock_w48
-  lock_stale_age_h: 6
-  engine_pgrep_check: true
-
-k13_independent_ground_truth:
-  external_anchor_type: market_data_feed  # Bloomberg/Yahoo/IEX als Ground-Truth
-  external_anchor_validation_frequency: "daily 06:00 NAV-Snapshot"
+  external_anchor_type: market_data_feed
+  external_anchor_validation_frequency: daily 06:00 NAV-Snapshot
   pre_action_domain_check:
-    env_tag: "sandbox/dev/staging/prod check pre-snapshot"
-    mount_point: "sqlite-db Path + Schema-Version"
-    network_region: "Market-Data-Endpoints fixed list"
+    env_tag: sandbox/dev/staging/prod check pre-snapshot
+    mount_point: sqlite-db Path + Schema-Version
+    network_region: Market-Data-Endpoints fixed list
   pre_action_backup_check:
-    backup_status: "previous NAV-Snapshot still consistent? Pre-snapshot-Sanity"
-    replication_lag: "n/a (per-day state)"
+    backup_status: previous NAV-Snapshot still consistent? Pre-snapshot-Sanity
+    replication_lag: n/a (per-day state)
   pre_action_blast_radius_check:
-    blast_radius: "ein Daily-NAV-Snapshot, kein Cross-Day-Effect"
-    reversibility_class: "state-only (NAV-Historie append-only)"
-
-k14_human_override_decay:
-  override_complexity: single_command  # STOP.flag in /tmp/df-kpm-portfolio-tracker.stop
-  override_documentation_freshness_days: 30
-  martin_review_cadence: "weekly NAV-Drift-Report + monthly Variante-D-Compliance-Audit"
-  bus_factor_handover_drilled: false
-
-k15_entropy_budget:
-  entropy_added_loc_estimate: 800
-  entropy_added_concepts:
-    - PortfolioSnapshot
-    - AssetAllocation
-    - DriftDetection
-    - NavCalculator
-    - VarianteDComplianceCheck
-  entropy_justified_by_rho: "+EUR 30k/Jahr Verhinderung ungeplanter Allocation-Drift + Foundation-Wert fuer KPM-Rebalance"
-  entropy_subtractive_potential: "ersetzt manuelle Wochen-NAV-Polls + Excel-Tracking"
-
+    blast_radius: ein Daily-NAV-Snapshot, kein Cross-Day-Effect
+    reversibility_class: state-only (NAV-Historie append-only)
 k16_concurrent_spawn_mutex:
   concurrent_spawn_protection: both
   lock_dir: /tmp/df-kpm-portfolio-tracker.lock
   lock_stale_age_h: 6
   engine_pgrep_check: true
   lock_release_on: EXIT_INT_TERM
-
-# === LC1-LC5 Lose-Coupling ===
-
+k14_human_override_decay:
+  override_complexity: single_command
+  override_documentation_freshness_days: 30
+  martin_review_cadence: weekly NAV-Drift-Report + monthly Variante-D-Compliance-Audit
+  bus_factor_handover_drilled: false
+k15_entropy_budget:
+  entropy_added_loc_estimate: 800
+  entropy_added_concepts:
+  - PortfolioSnapshot
+  - AssetAllocation
+  - DriftDetection
+  - NavCalculator
+  - VarianteDComplianceCheck
+  entropy_justified_by_rho: +EUR 30k/Jahr Verhinderung ungeplanter Allocation-Drift
+    + Foundation-Wert fuer KPM-Rebalance
+  entropy_subtractive_potential: ersetzt manuelle Wochen-NAV-Polls + Excel-Tracking
 lose_coupling:
   LC1_graceful_degradation:
     degradation_modes:
-      - full              # alle Asset-Klassen + DB live, full NAV-Snapshot
-      - degraded_no_market_data  # Market-Data-Feed down, Mock-Fallback aktiv
-      - sandbox_mock      # nur Mock-3-Asset-Portfolio, kein Real-Feed
+    - full
+    - degraded_no_market_data
+    - sandbox_mock
     degradation_test_required: true
-
   LC2_direct_mode:
     direct_mode_available: true
-    direct_mode_capability: 0.7  # Mock-Snapshot landet als jsonl
-    direct_mode_trigger: "market_data_feed unreachable >30s OR Phronesis-Ticket missing"
-
+    direct_mode_capability: 0.7
+    direct_mode_trigger: market_data_feed unreachable >30s OR Phronesis-Ticket missing
   LC3_circuit_breaker:
     circuit_breaker_timeout_s: 30
     circuit_breaker_open_threshold: 3
     circuit_breaker_half_open_test_interval_s: 300
-
   LC4_failure_isolation:
-    state_externalization: true   # SQLite + jsonl-Backup
-    idempotent_operations: true   # snapshot idempotent via day-key
+    state_externalization: true
+    idempotent_operations: true
     dependency_dlq_separate: true
-
   LC5_health_check:
-    health_check_dependencies: [market_data_feed]
+    health_check_dependencies:
+    - market_data_feed
     health_check_degraded_score: 0.6
-    health_check_endpoint_or_file: "/tmp/df-kpm-portfolio-tracker-health.json"
-
-# === Operatives ===
-
+    health_check_endpoint_or_file: /tmp/df-kpm-portfolio-tracker-health.json
 operations:
   output_path: ~/Projects/dark-factories/df-kpm-portfolio-tracker/
   sqlite_db_path: ~/.df-kpm-portfolio-tracker/portfolio-state.db
   jsonl_backup_path: branch-hub/audit/df-kpm-portfolio-tracker.jsonl
   stop_flag_path: /tmp/df-kpm-portfolio-tracker.stop
   health_file_path: /tmp/df-kpm-portfolio-tracker-health.json
-
-# === ENV-Var-Pflicht ===
-
 env_vars:
   DF_KPM_PORTFOLIO_REAL_ENABLED:
     default: false
-    description: "Real-Market-Data-Mode (true=live-feed, default=mock)"
+    description: Real-Market-Data-Mode (true=live-feed, default=mock)
   PHRONESIS_TICKET:
     required_when: DF_KPM_PORTFOLIO_REAL_ENABLED=true
-    description: "Pflicht bei Real-Mode-Aktivierung"
-
-# === rho-Schaetzung ===
-
+    description: Pflicht bei Real-Mode-Aktivierung
 rho_estimate:
   annual_eur: 30000
-  reason: "Verhinderung ungeplanter Allocation-Drift + Foundation-Wert fuer KPM-Rebalance + Variante-D-Compliance-Tracking"
+  reason: Verhinderung ungeplanter Allocation-Drift + Foundation-Wert fuer KPM-Rebalance
+    + Variante-D-Compliance-Tracking
   schwer_quantifizierbar: false
-
-# === Dependencies (Phase-2+) ===
-
 dependencies_phase_2:
-  - df-kpm-rebalance-engine
-  - df-kpm-drawdown-monitor
-
-# === CRUX-Bindung ===
-
+- df-kpm-rebalance-engine
+- df-kpm-drawdown-monitor
 crux_bindung:
-  K_0: "MAXIMAL geschuetzt (Read-only Tracking, KEINE Trade-Execution, Sandbox-Default, Phronesis-Pflicht Real-Mode)"
-  Q_0: "Familien-Vermoegens-Transparenz erhoeht via Daily-NAV"
-  I_min: "Strukturierte Variante-D-Compliance-Tracking (Kelly-Fraction + Drawdown-Caps)"
-  W_0: "Martin-Bandbreite minimiert via Daily-Tracking + automatische Drift-Detection"
+  K_0: MAXIMAL geschuetzt (Read-only Tracking, KEINE Trade-Execution, Sandbox-Default,
+    Phronesis-Pflicht Real-Mode)
+  Q_0: Familien-Vermoegens-Transparenz erhoeht via Daily-NAV
+  I_min: Strukturierte Variante-D-Compliance-Tracking (Kelly-Fraction + Drawdown-Caps)
+  W_0: Martin-Bandbreite minimiert via Daily-Tracking + automatische Drift-Detection
+activation_gates:
+  internal_real_mode:
+    env_var: df-kpm-portfolio-tracker_INTERNAL_REAL_ENABLED
+    default: false
+    description: Echte Daten-Verarbeitung lokal/sandbox, KEIN External-Output
+  external_real_mode:
+    env_var: df-kpm-portfolio-tracker_REAL_ENABLED
+    default: false
+    description: Real-Mode mit External-Output (Phronesis-Sign-Off Pflicht)
+    requires:
+      phronesis_ticket_env: PHRONESIS_TICKET
+      signoff_id_env: OPERATOR_SIGNOFF_ID
+  external_output_gate:
+    env_var_signoff_id: OPERATOR_SIGNOFF_ID
+    default: BLOCKED
+    description: Mechanischer Block fuer External-Communication ohne Sign-Off
+output_pipe_block:
+- external_api_call_unverified
+- production_db_write_unverified
+
+# [CRUX-MK]
