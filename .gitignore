@@ -14,3 +14,9 @@ STOP.flag
 *.secret
 .env
 audit-secret.key
+*.env
+*.sqlite3
+*.key
+*.pem
+secrets.json
+credentials.json
