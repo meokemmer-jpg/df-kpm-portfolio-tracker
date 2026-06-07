@@ -1,62 +1,138 @@
-# DF-KPM-Portfolio-Tracker [CRUX-MK]
+[![CI](https://github.com/meokemmer-jpg/df-kpm-portfolio-tracker/actions/workflows/test.yml/badge.svg)](https://github.com/meokemmer-jpg/df-kpm-portfolio-tracker/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0--PHASE--1-blue.svg)](config.yaml)
 
-**Welle-42 Foundation-DF für KPM (Kemmer-Portfolio-Management)**
-**Per `~/.claude/rules/kpm-sizing.md` Variante-D-Hybrid**
+# df-kpm-portfolio-tracker
 
-## Zweck
+> Daily NAV tracking and position-drift detection for the Kemmer family portfolio — read-only, audit-logged, sandbox-first.
 
-Real-Portfolio-State-Monitoring für Kemmer-Familien-Vermoegen.
-Tagesschluss-NAV + Position-Drift vs Target-Allocation pro Asset-Klasse.
+## Overview
 
-## K_0-MAX-Berührung
+**df-kpm-portfolio-tracker** is a Python-based portfolio monitoring tool that takes a daily end-of-day NAV (Net Asset Value) snapshot across all asset classes and detects allocation drift against the Variante-D target weights. It implements Kelly-fraction sizing (0.25–0.40 adaptive), three-tier drawdown caps (soft 15 % / hard 20 % / no-go 25 %), and HMAC-SHA256 audit logging for every run. The tracker operates in **sandbox mode by default** using a mock three-asset portfolio (Equities / Bonds / Cash), and only connects to live market data when explicitly enabled with a reviewed Phronesis sign-off ticket.
 
-Diese DF berührt das Kemmer-Familien-Vermoegen direkt. Strict-Conditions:
-- KEINE Real-Trade-Execution (read-only Portfolio-State)
-- KEIN Auto-Rebalance (nur Drift-Detection)
-- Sandbox-Mode-Default mit Mock-3-Asset-Portfolio
-- Phronesis-Pflicht Martin vor jedem Real-Mode-Aktivieren
+## Installation
 
-## KPM-Sizing-Variante-D-Pattern
+### Prerequisites
 
-Per `rules/kpm-sizing.md`:
-- Kelly-Fraction 0.25-0.40 kontext-adaptiv
-- Drawdown-Caps Soft-Brake 15% / Hard-Cap 20% / Absolute-No-Go 25%
-- HIVE-Score-Gate fuer Leverage-Erhoehung (>=0.7)
+- Python 3.9+
+- macOS (for LaunchAgent scheduling) or any Unix-like OS
 
-## Asset-Universum (Mock-Default)
+### Steps
 
-- Equities US (z.B. SPY, QQQ)
-- Equities EU (z.B. EXSA)
-- Equities EM (z.B. EEM)
-- Bonds (z.B. AGG, BNDX)
-- Crypto (BTC, ETH)
-- Cash (USD, EUR)
+1. **Clone the repository**
 
-## ENV-Var-Aktivierung
+   ```bash
+   git clone https://github.com/meokemmer-jpg/df-kpm-portfolio-tracker.git
+   cd df-kpm-portfolio-tracker
+   ```
+
+2. **Create and activate a virtual environment**
+
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. **Install dependencies**
+
+   ```bash
+   pip install pytest
+   ```
+
+4. **Configure environment variables** (sandbox mode requires no additional setup)
+
+   ```bash
+   # Default — sandbox mock portfolio, no real market data
+   export DF_KPM_PORTFOLIO_REAL_ENABLED=false
+
+   # Real-mode — requires explicit Phronesis sign-off
+   export DF_KPM_PORTFOLIO_REAL_ENABLED=true
+   export PHRONESIS_TICKET="PT-YYYY-MM-DD-001"
+   export OPERATOR_SIGNOFF_ID="your-signoff-id"
+   ```
+
+5. **Run the tracker** (SQLite state database is created automatically on first run)
+
+   ```bash
+   python3 -m src.adapter_orchestrator
+   ```
+
+6. **(Optional) Install the macOS LaunchAgent for daily 06:00 scheduling**
+
+   ```bash
+   cp scripts/com.kemmer.df-kpm-portfolio-tracker.plist ~/Library/LaunchAgents/
+   launchctl load ~/Library/LaunchAgents/com.kemmer.df-kpm-portfolio-tracker.plist
+   ```
+
+## Usage
+
+### 1 — Sandbox NAV snapshot (default)
+
+No environment configuration needed. Runs against the built-in mock three-asset portfolio and writes results to the local SQLite database at `~/.df-kpm-portfolio-tracker/portfolio-state.db`.
 
 ```bash
-export DF_KPM_PORTFOLIO_REAL_ENABLED=false  # Default-Disabled
-export PHRONESIS_TICKET="PT-2026-XX-XX-001"  # Pflicht bei Real-Mode
+python3 -m src.adapter_orchestrator
 ```
 
-## Architektur
+### 2 — Real market data mode
 
-- `src/portfolio_tracker_main.py` - Core-Logic (NAV-Calc + Drift-Detection)
-- `src/kpm_variante_d_helpers.py` - Kelly-Fraction + Drawdown-Cap-Calc
-- `src/adapter_orchestrator.py` - LaunchAgent-Entry mit main()
-- `src/audit_logger.py` - HMAC-SHA256 Audit-Pflicht (K_0)
+Requires a valid `PHRONESIS_TICKET` and `OPERATOR_SIGNOFF_ID`. **Never enable real mode without a reviewed sign-off ticket.**
 
-## CRUX-Bindung
+```bash
+export DF_KPM_PORTFOLIO_REAL_ENABLED=true
+export PHRONESIS_TICKET="PT-2026-06-07-001"
+export OPERATOR_SIGNOFF_ID="martin-signoff-001"
+python3 -m src.adapter_orchestrator
+```
 
-- **K_0:** Read-only Tracking schuetzt vor Auto-Trade-Risiko
-- **Q_0:** Familien-Vermoegens-Transparenz erhoeht
-- **I_min:** Strukturiertes Variante-D-Compliance-Tracking
-- **W_0:** Martin-Bandbreite minimiert via Daily-Tracking
+### 3 — Shell-script wrapper with K16 mutex (macOS)
 
-## Tests
+The wrapper enforces a filesystem mutex, auto-recovers stale locks older than 6 hours, and exits cleanly on a stop-flag. Use this for manual invocations or for testing outside the LaunchAgent.
 
-- `tests/test_portfolio_tracker_main.py` - >=8 Tests
-- `tests/test_kpm_variante_d.py` - >=4 Tests
-- `tests/test_adapter_orchestrator.py` - >=4 Tests
+```bash
+bash scripts/run-df-kpm-portfolio-tracker-mac.sh
+```
 
-[CRUX-MK]
+### 4 — Run the full test suite
+
+```bash
+pytest tests/ -v
+```
+
+### 5 — Inspect the HMAC-signed audit log
+
+Every NAV snapshot is signed and appended to the JSONL audit trail.
+
+```bash
+tail -f branch-hub/audit/df-kpm-portfolio-tracker.jsonl | python3 -m json.tool
+```
+
+## Project Structure
+
+```
+df-kpm-portfolio-tracker/
+├── src/
+│   ├── adapter_orchestrator.py          # Entry-point & run orchestration
+│   ├── portfolio_tracker_main.py        # NAV calculation + drift detection
+│   ├── kpm_variante_d_helpers.py        # Kelly-fraction & drawdown-cap logic
+│   ├── audit_logger.py                  # HMAC-SHA256 audit logging
+│   └── provenance_integration.py        # Provenance envelope & chain linkage
+├── scripts/
+│   ├── run-df-kpm-portfolio-tracker-mac.sh        # Shell wrapper (K16 mutex)
+│   └── com.kemmer.df-kpm-portfolio-tracker.plist  # macOS LaunchAgent
+├── tests/
+│   ├── test_portfolio_tracker_main.py
+│   ├── test_kpm_variante_d.py
+│   ├── test_adapter_orchestrator.py
+│   └── test_provenance_integration.py
+├── config.yaml       # DF metadata, gate configuration, env-var spec
+└── genealogy.json
+```
+
+## Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. This project follows a strict safety model: any change touching NAV calculation, drawdown-cap logic, or the audit logger requires a passing test suite (>=90 % coverage target) and a reviewer sign-off. Feature branches should be named `feature/<short-description>`; bug fixes `fix/<short-description>`. Open an issue first for significant changes so the approach can be discussed before implementation begins.
+
+## License
+
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
