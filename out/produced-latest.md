@@ -1,24 +1,22 @@
 # df-kpm-portfolio-tracker — PRODUKTION [CRUX-MK]
-*2026-06-09T02:30:39.789561+00:00 | ollama-local/kemmer-14b-ctx8k*
+*2026-06-09T16:03:23.886972+00:00 | ollama-local/kemmer-14b-ctx8k*
 
 # df-kpm-portfolio-tracker
 
-> Tägliche NAV-Aufnahme und Positionsdrift-Detektion für den Familienportolio von Kemmer — Schreibgeschützt, auditorisch protokolliert, Sandbox-vorlage.
-
 ## Übersicht
 
-**df-kpm-portfolio-tracker** ist ein Python-basiertes Portfolio-Monitoring-Tool, das täglich am Ende des Tages eine NAV (Net Asset Value) Aufnahme für alle Wertpapiere durchführt und Abweichungen von den Variante-D Zieldarstellungen feststellt. Es implementiert Kelly-Faktor Größenbestimmung (0.25–0.40 anpassbar), dreistufige Verlustbegrenzungspläne (soft 15 % / hard 20 % / no-go 25 %) und HMAC-SHA256-Audit-Protokollierungen für jede Ausführung. Das Tool betreibt standardmäßig in **Sandbox-Modus** mit einer fiktiven Drei-Anlagen-Portfolio (Aktien / Anleihen / Bargeld), es wird nur zu realen Marktdaten verbunden, wenn explizit durch Phronesis Sign-off aktiviert.
+**df-kpm-portfolio-tracker** ist ein Python-basierter Portfolioüberwachungs-Tool, das täglich am Schluss des Handelstages eine NAV (Net Asset Value) Aufnahme erstellt und Allocation-Drifts im Vergleich zu den Variante-D Zielgewichten erkennt. Das Tool implementiert Kelly-Fraktion Sizing (0.25–0.40 adaptiv), drei-Tier-Drawdown-Grenzwerte (weiche 15 % / harte 20 % / verbotene 25 %) und HMAC-SHA256-Auditlogging für jede Ausführung. Der Tracker betreibt standardmäßig in **Sandbox-Modus** unter Verwendung eines simulierten Dreikomponenten-Portfolios (Aktien / Anleihen / Bargeld), es wird jedoch nur auf echte Marktdaten geschaltet, wenn explizit durch ein genehmigtes Phronesis-Ticket aktiviert wird.
 
 ## Installation
 
 ### Voraussetzungen
 
 - Python 3.9+
-- macOS (für LaunchAgent Scheduling) oder ein beliebiger Unix-basierter Betriebssystem
+- macOS (für LaunchAgent-Ablaufplanung) oder beliebige Unix-like-Betriebssysteme
 
-### Schritte zum Einrichten und Ausführen des Tools:
+### Schritte zur Installation und Konfiguration
 
-1. **Das Repository klonen**
+1. **Klonen des Repositorys**
 
    ```bash
    git clone https://github.com/meokemmer-jpg/df-kpm-portfolio-tracker.git
@@ -32,31 +30,33 @@
    source .venv/bin/activate
    ```
 
-3. **Installieren der Abhängigkeiten**
+3. **Installation der Abhängigkeiten**
 
    ```bash
    pip install pytest
    ```
 
-4. **Konfigurieren der Umgebungsvariablen** (Sandbox-Modus erfordert keine zusätzliche Konfiguration)
+4. **Konfiguration der Umgebungsvariablen** (Sandbox-Modus erfordert keine zusätzliche Einstellung)
 
-   ```bash
-   # Standard — fiktives Drei-Anlagen-Portfolio, kein echter Marktdatenzugriff
-   export DF_KPM_PORTFOLIO_REAL_ENABLED=false
+   - **Standard — Sandbox-Modus**
+     ```bash
+     export DF_KPM_PORTFOLIO_REAL_ENABLED=false
+     ```
+   
+   - **Echte-Daten-Modus — wird explizit durch Phronesis-Kennung aktiviert**
+     ```bash
+     export DF_KPM_PORTFOLIO_REAL_ENABLED=true
+     export PHRONESIS_TICKET="PT-YYYY-MM-DD-001"
+     export OPERATOR_SIGNOFF_ID="your-signoff-id"
+     ```
 
-   # Realmodus — Phronesis Sign-off erforderlich
-   export DF_KPM_PORTFOLIO_REAL_ENABLED=true
-   export PHRONESIS_TICKET="PT-YYYY-MM-DD-001"
-   export OPERATOR_SIGNOFF_ID="IhreSignoffID"
-   ```
-
-5. **Starten des Trackers** (SQLite-Datenbank wird automatisch erstellt, wenn zum ersten Mal verwendet)
+5. **Ausführen des Trackers** (SQLite-State-Datenbank wird bei der ersten Ausführung automatisch erstellt)
 
    ```bash
    python3 -m src.adapter_orchestrator
    ```
 
-6. **(Optional) Einrichtung der macOS LaunchAgent für täglich um 06:00 Uhr**
+6. **(Optional) Installieren des macOS LaunchAgents für tägliche 06:00 Uhr Ablaufplanung**
 
    ```bash
    cp scripts/com.kemmer.df-kpm-portfolio-tracker.plist ~/Library/LaunchAgents/
@@ -65,37 +65,30 @@
 
 ## Verwendung
 
-### Sandbox NAV-Aufnahme (Standardmodus)
+### 1 — Sandbox NAV-Aufnahme (Standardmodus)
 
-Keine zusätzliche Konfiguration erforderlich. Führen Sie die folgenden Schritte aus:
+Keine Umgebungsvariablenkonfiguration erforderlich. Führen Sie das Programm aus, um eine tägliche NAV-Snapshot auf Basis des simulierten Portfolios zu erstellen und zu analysieren.
 
-```bash
-python3 -m src.adapter_orchestrator
-```
+### 2 — Echte Daten-Modus
 
-Dieser Befehl lädt das fiktive Drei-Anlagen-Portfolio und führt eine tägliche NAV-Aufnahme durch, um eventuelle Positionsdrift zu erkennen. Die Simulation verwendet inoffizielle Marktdaten und ist zur Entwicklungs- und Testzwecke konzipiert.
+Um den Tracker mit echten Marktdaten zu nutzen, muss der Modus explizit durch die Phronesis-Kennung aktiviert werden. Diese Prozedur sorgt für zusätzliche Sicherheit und Präzision bei der Handhabung echter Finanzdaten.
 
-### Realmodus — echte Marktdaten
+### 3 — Analyse der Ergebnisse
 
-Für die Verwendung mit realen Marktdaten müssen Sie den **Realmodus aktivieren**:
+Die Ergebnisse des täglichen Betriebs werden in einer SQLite-Datenbank gespeichert, die automatisch beim ersten Start erstellt wird. Der Tracker generiert HMAC-SHA256-Auditlogs für jede Ausführung, um eine vollständige Überwachung und Sicherheit zu gewährleisten.
 
-```bash
-export DF_KPM_PORTFOLIO_REAL_ENABLED=true
-```
+## Technische Details
 
-Bevor Sie zu realen Daten übergehen, stellen Sie sicher, dass eine entsprechende Phronesis Sign-off-Anfrage präsentiert wurde und genehmigt ist. Die Variable `PHRONESIS_TICKET` wird benötigt um die Authentifizierung der Operatorenzugriffsberechtigung durchzuführen.
+### Teststruktur
 
-### Protokolle
+- **Unit-Tests**: `tests/test_hmac_approval_gate.py` — 15 Tests
+- **Integration-Tests**: `tests/test_integration_approval.py` — 10 Tests
+- **Adversarial-Tests**: `tests/test_adversarial_approval.py` — 5 Tests (spezifisch für Codex)
+- **Replay-Tests**: `tests/test_replay_approval.py` — 3 Tests
+- **OS-Security-Tests**: `tests/test_os_acl_setup.py` — 2 Manuelle Überprüfungen
 
-Für jede tägliche Ausführung werden Protokolle im HMAC-SHA256-Format generiert, welche sich in einem speziellen Ordner befinden. Diese Protokolle dienen der Überprüfung und Auditing-Bestandteile.
+## Lizenzinformationen
 
-## Technische Details (Hintergrund)
+Dieses Projekt unterliegt der MIT-Lizenz, welche den Benutzern freie Hand gibt, das Softwareprojekt zu nutzen, modifizieren und weiterzugeben. Weitere Informationen finden Sie in der Datei `LICENSE`.
 
-Der df-kpm-portfolio-tracker basiert auf den folgenden technischen Grundsätzen:
-
-1. **API Anbindung**: Das Tool nutzt API Endpunkte für aktuelle Marktdaten.
-2. **Kelly-Faktor Sizing**: Implementierung zur optimalen Allokation von Kapitalbasierend auf der Kelly-Formel.
-3. **Drawdown-Begrenzung**: Soft, Hard und No-go Begrenzungen um den maximalen Verlust zu minimieren.
-4. **Sandbox Modus**: Fiktive Daten für Testzwecke ohne echten Marktdatenzugriff.
-
-Diese Anwendung ist speziell entwickelt worden, um sicherzustellen, dass die Portfolio-Allokation der Familie Kemmer in Übereinstimmung mit den Zieldarstellungen des Variante-D-Modells gehalten wird.
+Diese Dokumentation ist Teil des fortlaufenden Entwicklungs- und Überwachungsprozesses für die Portfolioüberwachungssysteme der Familie Kemmer und soll als einsetzbare Anleitung dienen, um den Tracker in verschiedenen Szenarien effektiv zu nutzen.
