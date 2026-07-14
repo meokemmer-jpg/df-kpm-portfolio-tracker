@@ -1,0 +1,6 @@
+{
+  "verdict": "HOLDS",
+  "reason": "Der Test erzeugt zwei echte CSV-Portfolios mit gleichem NAV, aber stark unterschiedlicher Allokation, ruft die echte Report-Funktion auf und prüft, dass Risiko-, Status-, Actionable- und Drift-Ergebnisse auseinanderlaufen.",
+  "ts": "2026-07-13T09:02:23.726827+00:00",
+  "attempts": 1
+}
