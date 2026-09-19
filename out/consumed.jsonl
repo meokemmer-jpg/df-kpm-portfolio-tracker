@@ -110,3 +110,4 @@
 {"ts": "2026-09-07T07:37:08.914496+00:00", "producer": "df-kpm-portfolio-tracker", "by": "df-artifact-collector", "purpose": "index", "crux": "[CRUX-MK]", "valid": true}
 {"ts": "2026-09-07T08:07:48.913512+00:00", "producer": "df-kpm-portfolio-tracker", "by": "df-artifact-collector", "purpose": "index", "crux": "[CRUX-MK]", "valid": true}
 {"ts": "2026-09-07T08:39:49.723962+00:00", "producer": "df-kpm-portfolio-tracker", "by": "df-artifact-collector", "purpose": "index", "crux": "[CRUX-MK]", "valid": true}
+{"ts": "2026-09-18T07:40:29.485870+00:00", "producer": "df-kpm-portfolio-tracker", "by": "df-domain-nlm-sync", "purpose": "nlm-board", "crux": "[CRUX-MK]", "valid": true}
